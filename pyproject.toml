@@ -1,0 +1,13 @@
+[project]
+name = "tggift"
+version = "0.1.0"
+description = "Telegram Gift Marketplace Bot"
+requires-python = ">=3.12"
+
+[project.scripts]
+bot = "bot.main:main"
+worker = "workers.runner:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
