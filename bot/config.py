@@ -15,6 +15,8 @@ class BotConfig:
 
     token: str = field(default_factory=lambda: os.getenv("BOT_TOKEN", ""))
     username: str = field(default_factory=lambda: os.getenv("BOT_USERNAME", ""))
+    api_id: int = field(default_factory=lambda: int(os.getenv("API_ID", "0") or "0"))
+    api_hash: str = field(default_factory=lambda: os.getenv("API_HASH", ""))
 
 
 @dataclass(frozen=True)
