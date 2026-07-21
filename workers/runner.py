@@ -68,9 +68,11 @@ async def run_retry_worker(session_factory, bot):
 async def run_workers(session_factory, bot):
     """Run all background workers."""
     logger.info("Starting background workers...")
+    from workers.weekly_report_worker import run_weekly_report_worker
     await asyncio.gather(
         run_cleanup_worker(session_factory, bot),
         run_retry_worker(session_factory, bot),
+        run_weekly_report_worker(session_factory, bot),
     )
 
 

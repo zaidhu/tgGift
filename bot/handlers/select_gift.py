@@ -31,10 +31,12 @@ async def cb_gift_page(callback: CallbackQuery, state: FSMContext, **kwargs):
     catalog = GiftCatalogService(bot)
     gifts = await catalog.get_gifts()
 
-    # Apply pricing adjustments
+    # Filter hidden gifts and apply pricing
     session_factory = kwargs.get("session")
     if session_factory:
         async with session_factory() as session:
+            from admin.gifts import filter_hidden_gifts
+            gifts = await filter_hidden_gifts(session, gifts)
             pricing = PricingService(session)
             gifts = await pricing.apply_to_gifts_list(gifts)
 
@@ -53,6 +55,8 @@ async def cb_gift_catalog(callback: CallbackQuery, state: FSMContext, **kwargs):
     session_factory = kwargs.get("session")
     if session_factory:
         async with session_factory() as session:
+            from admin.gifts import filter_hidden_gifts
+            gifts = await filter_hidden_gifts(session, gifts)
             pricing = PricingService(session)
             gifts = await pricing.apply_to_gifts_list(gifts)
 

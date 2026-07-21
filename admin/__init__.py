@@ -10,6 +10,8 @@ from .system import router as system_router
 from .settings import router as settings_router
 from .search import router as search_router
 from .pricing import router as pricing_router
+from .gifts import router as gifts_router
+from .weekly_report import router as weekly_report_router
 
 __all__ = [
     "stats_router",
@@ -22,4 +24,6 @@ __all__ = [
     "settings_router",
     "search_router",
     "pricing_router",
+    "gifts_router",
+    "weekly_report_router",
 ]

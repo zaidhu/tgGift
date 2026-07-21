@@ -27,6 +27,7 @@ class AdminConfig:
         int(x.strip()) for x in os.getenv("ADMIN_ID", "").split(",") if x.strip().isdigit()
     ])
     owner_id: int = field(default_factory=lambda: int(os.getenv("OWNER_ID", "0") or "0"))
+    channel_id: str = field(default_factory=lambda: os.getenv("ADMIN_CHANNEL_ID", ""))
 
     def is_admin(self, user_id: int) -> bool:
         return user_id in self.admin_ids or user_id == self.owner_id

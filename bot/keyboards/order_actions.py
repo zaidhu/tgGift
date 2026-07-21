@@ -22,6 +22,13 @@ def admin_main_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⚙️ System", callback_data="admin_system"),
             InlineKeyboardButton(text="🔍 Search", callback_data="admin_search"),
         ],
+        [
+            InlineKeyboardButton(text="💲 Pricing", callback_data="admin_pricing"),
+            InlineKeyboardButton(text="🎁 Gifts", callback_data="admin_gifts"),
+        ],
+        [
+            InlineKeyboardButton(text="📈 Weekly Report", callback_data="admin_weekly"),
+        ],
         [InlineKeyboardButton(text="🔙 Back to Bot", callback_data="start")],
     ])
 

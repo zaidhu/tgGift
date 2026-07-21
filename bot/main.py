@@ -35,6 +35,8 @@ from admin import (
     settings_router,
     search_router,
     pricing_router,
+    gifts_router,
+    weekly_report_router,
 )
 from admin.panel import router as admin_panel_router
 from core.listeners import register_all_listeners
@@ -127,6 +129,8 @@ async def main():
     dp.include_router(settings_router)
     dp.include_router(search_router)
     dp.include_router(pricing_router)
+    dp.include_router(gifts_router)
+    dp.include_router(weekly_report_router)
 
     # Register event listeners
     register_all_listeners(bot)
@@ -147,6 +151,8 @@ async def main():
         BotCommand(command="search", description="🔍 Search orders (admin)"),
         BotCommand(command="retry", description="🔄 Retry failed order (admin)"),
         BotCommand(command="pricing", description="💰 Set gift fees/discounts (admin)"),
+        BotCommand(command="gifts", description="🎁 Manage gift catalog visibility (admin)"),
+        BotCommand(command="weekly", description="📈 Weekly analytics report (admin)"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 

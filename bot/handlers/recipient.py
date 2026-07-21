@@ -27,10 +27,68 @@ class RecipientStates(StatesGroup):
 
 @router.callback_query(F.data == "recipient_link")
 async def cb_recipient_link(callback: CallbackQuery, state: FSMContext, **kwargs):
-    """Handle gift link method - create order and generate link."""
+    """Handle gift link method - show preview first, then generate link on confirm."""
+    state_data = await state.get_data()
+    gift = state_data.get("selected_gift", {})
+    custom_message = state_data.get("custom_message")
+
+    if not gift:
+        await callback.answer("No gift selected. Please start over.", show_alert=True)
+        return
+
+    # Show preview
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+    preview_text = (
+        f"🎁 <b>Gift Link Preview</b>\n\n"
+        f"Here's what your recipient will see:\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🎁 <b>{gift.get('name', 'Gift')}</b>\n"
+        f"{gift.get('icon', '🎁')} {gift.get('description', '')}\n\n"
+        f"💰 <b>Price:</b> {gift.get('final_stars') or gift.get('stars', '?')} ⭐\n"
+    )
+
+    if custom_message:
+        preview_text += f"\n📝 <b>Your Message:</b>\n<i>{custom_message}</i>\n"
+    else:
+        preview_text += "\n📝 <b>Message:</b> <i>No custom message</i>\n"
+
+    preview_text += (
+        f"\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"When they open the link, the gift will be delivered\n"
+        f"automatically after payment verification.\n\n"
+        f"⏰ Link expires in <b>72 hours</b>."
+    )
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Generate Link", callback_data="recipient_link_confirm")],
+        [InlineKeyboardButton(text="🔄 Change Method", callback_data="recipient_method")],
+        [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel")],
+    ])
+
+    await callback.message.edit_text(preview_text, parse_mode="HTML", reply_markup=keyboard)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "recipient_method")
+async def cb_recipient_method(callback: CallbackQuery, state: FSMContext, **kwargs):
+    """Go back to recipient method selection."""
+    from bot.keyboards.gift_selection import recipient_method_keyboard
+
+    text = (
+        "👤 <b>How would you like to send this gift?</b>\n\n"
+        "Choose a method to identify the recipient:"
+    )
+    keyboard = recipient_method_keyboard()
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "recipient_link_confirm")
+async def cb_recipient_link_confirm(callback: CallbackQuery, state: FSMContext, **kwargs):
+    """Confirm and generate the actual gift link."""
     from services import GiftLinkService
     from models import Order, OrderStatus, RecipientMethod
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     session_factory = kwargs.get("session")
     user = kwargs.get("user")
@@ -77,7 +135,7 @@ async def cb_recipient_link(callback: CallbackQuery, state: FSMContext, **kwargs
             f"Share this link with your recipient:\n\n"
             f"{link_url}\n\n"
             f"🎁 <b>Gift:</b> {gift['name']}\n"
-            f"💰 <b>Price:</b> {gift['stars']} ⭐\n\n"
+            f"💰 <b>Price:</b> {gift.get('final_stars') or gift.get('stars')} ⭐\n\n"
             f"When they open the link, they'll receive the gift "
             f"automatically after payment verification.\n\n"
             f"<b>⚠️ Note:</b> You'll still need to complete payment "
