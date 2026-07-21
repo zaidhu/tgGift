@@ -39,6 +39,9 @@ class EventType(str, Enum):
     # Admin events
     BROADCAST_SENT = "broadcast_sent"
 
+    # System events
+    SYSTEM_ERROR = "system_error"
+
 
 @dataclass
 class Event:
