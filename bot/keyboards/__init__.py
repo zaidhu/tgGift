@@ -10,8 +10,10 @@ from .gift_selection import (
 )
 from .order_actions import (
     admin_main_keyboard,
-    order_detail_keyboard,
-    refund_action_keyboard,
+    admin_orders_page_keyboard,
+    admin_order_actions_keyboard,
+    admin_refund_actions_keyboard,
+    admin_settings_keyboard,
 )
 from .pricing import (
     pricing_list_keyboard,
@@ -26,8 +28,10 @@ __all__ = [
     "order_review_keyboard",
     "gift_link_sent_keyboard",
     "admin_main_keyboard",
-    "order_detail_keyboard",
-    "refund_action_keyboard",
+    "admin_orders_page_keyboard",
+    "admin_order_actions_keyboard",
+    "admin_refund_actions_keyboard",
+    "admin_settings_keyboard",
     "pricing_list_keyboard",
     "pricing_adjustment_keyboard",
 ]

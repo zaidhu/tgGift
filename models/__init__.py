@@ -8,13 +8,21 @@ from .refund import Refund, RefundStatus
 from .gift_link import GiftLink, GiftLinkStatus
 from .queue import QueueJob, JobType, JobStatus
 from .transaction import Transaction, TransactionType
-from .analytics import AnalyticsSnapshot
+from .analytics import AnalyticsSnapshot, AnalyticsPeriod
 from .settings import BotSetting
 from .gift_pricing import GiftPricing
 # Stubs for future features
-from .referral import Referral, ReferralStatus
-from .wishlist import Wishlist
-from .loyalty import LoyaltyPoints
+from .referral import Referral
+from .wishlist import Wishlist, WishlistItem
+from .loyalty import LoyaltyPoint
+
+
+class ReferralStatus:
+    """Referral status enum (future stub)."""
+    PENDING = "pending"
+    CLAIMED = "claimed"
+    EXPIRED = "expired"
+
 
 __all__ = [
     "Base", "TimestampMixin",
@@ -25,10 +33,10 @@ __all__ = [
     "GiftLink", "GiftLinkStatus",
     "QueueJob", "JobType", "JobStatus",
     "Transaction", "TransactionType",
-    "AnalyticsSnapshot",
+    "AnalyticsSnapshot", "AnalyticsPeriod",
     "BotSetting",
     "GiftPricing",
     "Referral", "ReferralStatus",
-    "Wishlist",
-    "LoyaltyPoints",
+    "Wishlist", "WishlistItem",
+    "LoyaltyPoint",
 ]

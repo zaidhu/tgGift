@@ -1,7 +1,7 @@
 """Gift Link model."""
 
 import enum
-from sqlalchemy import BigInteger, Integer, String, DateTime, ForeignKey
+from sqlalchemy import BigInteger, Integer, String, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, TimestampMixin
 
