@@ -100,7 +100,10 @@ async def successful_payment(message: Message, state: FSMContext, **kwargs):
 
     async with session_factory() as session:
         payment_service = PaymentService(bot, session)
-        order_id = await payment_service.verify_payment(message.successful_payment)
+        order_id = await payment_service.verify_payment(
+            message.successful_payment, 
+            buyer_id=message.from_user.id
+        )
 
         if not order_id:
             await message.answer("⚠️ Payment verification failed. Please contact support.")
@@ -172,12 +175,16 @@ async def _deliver_gift(session, order, bot, state_data):
         order.status = OrderStatus.PROCESSING
         await session.commit()
 
-        # Send the gift
-        success = await api.send_gift_to_user(
-            recipient_id=recipient_id,
-            gift_id=order.gift_id or 0,
-            custom_message=order.custom_message,
-        )
+        # Send the gift (only if it's a real gift, not a custom payment)
+        if order.gift_id:
+            success = await api.send_gift_to_user(
+                recipient_id=recipient_id,
+                gift_id=order.gift_id,
+                custom_message=order.custom_message,
+            )
+        else:
+            # For custom star payments, there's no gift to send, just a notification
+            success = True
 
         if success:
             order.status = OrderStatus.DELIVERED
@@ -194,13 +201,42 @@ async def _deliver_gift(session, order, bot, state_data):
                 }
             ))
 
-            await bot.send_message(
-                order.telegram_id,
-                "🎁 <b>Gift Delivered Successfully!</b>\n\n"
-                f"Order #{order.id}\n"
-                f"Recipient: {recipient_id}",
-                parse_mode="HTML",
-            )
+            # Notify the payer
+            if order.gift_id:
+                payer_text = (
+                    "🎁 <b>Gift Delivered Successfully!</b>\n\n"
+                    f"Order #{order.id}\n"
+                    f"Recipient: {recipient_id}"
+                )
+            else:
+                payer_text = (
+                    "💰 <b>Payment Sent Successfully!</b>\n\n"
+                    f"Order #{order.id}\n"
+                    f"Amount: {order.gift_stars_price} ⭐\n"
+                    f"Recipient: {recipient_id}"
+                )
+                
+            await bot.send_message(order.telegram_id, payer_text, parse_mode="HTML")
+            
+            # If the payer is not the recipient, notify the recipient too
+            if order.telegram_id != recipient_id:
+                try:
+                    if order.gift_id:
+                        recipient_text = (
+                            "🎁 <b>Someone sent you a gift!</b>\n\n"
+                            f"A {order.gift_name or 'gift'} has been delivered to your collection.\n"
+                            f"Check your Telegram gifts to view it!"
+                        )
+                    else:
+                        recipient_text = (
+                            "💰 <b>You received Stars!</b>\n\n"
+                            f"Someone sent you {order.gift_stars_price} Stars via the bot.\n"
+                            "The Stars have been added to your bot balance."
+                        )
+                        
+                    await bot.send_message(recipient_id, recipient_text, parse_mode="HTML")
+                except Exception as e:
+                    logger.warning(f"Could not notify recipient {recipient_id}: {e}")
         else:
             order.status = OrderStatus.FAILED
             order.error_message = "Failed to send gift via Telegram API"
