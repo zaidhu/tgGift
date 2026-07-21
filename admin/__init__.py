@@ -9,6 +9,7 @@ from .broadcast import router as broadcast_router
 from .system import router as system_router
 from .settings import router as settings_router
 from .search import router as search_router
+from .pricing import router as pricing_router
 
 __all__ = [
     "stats_router",
@@ -20,4 +21,5 @@ __all__ = [
     "system_router",
     "settings_router",
     "search_router",
+    "pricing_router",
 ]
