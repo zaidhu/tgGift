@@ -42,13 +42,13 @@ class AuthMiddleware(BaseMiddleware):
         if user_from_update:
             async with self.session_factory() as session:
                 # Find or create user
+                from sqlalchemy import select
                 result = await session.execute(
-                    User.__table__.select().where(User.telegram_id == user_from_update.id)
+                    select(User).where(User.telegram_id == user_from_update.id)
                 )
-                existing_user = result.first()
+                user = result.scalar_one_or_none()
 
-                if existing_user:
-                    user = existing_user[0]
+                if user:
                     # Update username if changed
                     if user.username != user_from_update.username:
                         user.username = user_from_update.username

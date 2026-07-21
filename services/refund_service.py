@@ -59,13 +59,13 @@ class RefundService:
         )
         return list(result.scalars().all())
 
-    async def approve_refund(self, refund_id: int, admin_id: int) -> Refund:
+    async def approve_refund(self, refund_id: int, admin_id: int, bot=None) -> Refund:
         """Approve a refund request."""
         refund = await self.finance.approve_refund(refund_id, admin_id)
         await self.session.commit()
 
         # Auto-complete after approval (for Stars, Telegram handles the actual refund)
-        refund = await self.finance.complete_refund(refund_id)
+        refund = await self.finance.complete_refund(refund_id, bot=bot)
         await self.session.commit()
 
         logger.info(f"Refund approved and completed: {refund_id}")

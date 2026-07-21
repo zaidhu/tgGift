@@ -356,7 +356,7 @@ async def on_gift_failed(event: Event) -> None:
     await send_notification(bot, chat_id, text, parse_mode="HTML")
 
     # Alert admin DM (critical)
-    admin_notif = NotificationService(bot, config.logging.admin_channel_id, config.admin.owner_id)
+    admin_notif = NotificationService(bot, config.logging.admin_channel_id, config.admin.admin_ids[0] if config.admin.admin_ids else config.admin.owner_id)
     await admin_notif.alert_delivery_failed(order_id=order_id, reason=error, telegram_id=chat_id)
 
     # Log to channel

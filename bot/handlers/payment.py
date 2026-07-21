@@ -46,19 +46,29 @@ async def cb_pay(callback: CallbackQuery, state: FSMContext, **kwargs):
         )
 
         # Send invoice
-        success = await payment_service.send_invoice_message(
-            chat_id=callback.from_user.id,
-            gift_name=order.gift_name or "Gift",
-            stars_amount=order.gift_stars_price or 0,
-            invoice_payload=invoice_id,
-            order_id=order_id,
-        )
-
-        if not success:
+        # We need to capture the message object to store its ID
+        try:
+            from aiogram.types import LabeledPrice
+            invoice_msg = await bot.send_invoice(
+                chat_id=callback.from_user.id,
+                title=f"Telegram Gift: {order.gift_name or 'Gift'}",
+                description=f"Purchase {order.gift_name or 'Gift'} as a gift\nCustom message included",
+                payload=invoice_id,
+                provider_token="",  # Empty for Stars
+                currency="XTR",  # Stars currency
+                prices=[LabeledPrice(label=order.gift_name or "Gift", amount=order.gift_stars_price or 0)],
+            )
+            await state.update_data(last_invoice_msg_id=invoice_msg.message_id)
+            await callback.answer("Invoice sent! Please complete the payment.")
+            
+            # Optionally delete the "Review" message to keep chat clean
+            try:
+                await callback.message.delete()
+            except:
+                pass
+        except Exception as e:
+            logger.error(f"Failed to send invoice: {e}")
             await callback.answer("Failed to create payment. Please try again.", show_alert=True)
-            return
-
-        await callback.answer("Invoice sent! Please complete the payment.")
 
 
 @router.pre_checkout_query()
@@ -72,10 +82,21 @@ async def pre_checkout(pre_checkout: PreCheckoutQuery, **kwargs):
 async def successful_payment(message: Message, state: FSMContext, **kwargs):
     """Handle successful payment."""
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    from aiogram.exceptions import TelegramBadRequest
 
     session_factory = kwargs.get("session")
     bot = message.bot
     state_data = await state.get_data()
+
+    # Attempt to delete the original invoice message if we have its ID
+    # Usually the successful_payment message is a separate message from the invoice
+    # We can try to delete the message that preceded it or store invoice message ID in state
+    invoice_msg_id = state_data.get("last_invoice_msg_id")
+    if invoice_msg_id:
+        try:
+            await bot.delete_message(chat_id=message.chat.id, message_id=invoice_msg_id)
+        except TelegramBadRequest:
+            pass # Message might already be deleted or too old
 
     async with session_factory() as session:
         payment_service = PaymentService(bot, session)

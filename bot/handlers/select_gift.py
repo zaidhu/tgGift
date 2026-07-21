@@ -72,7 +72,7 @@ async def cb_gift_catalog(callback: CallbackQuery, state: FSMContext, **kwargs):
 @router.callback_query(F.data.startswith("gift_select:"))
 async def cb_gift_select(callback: CallbackQuery, state: FSMContext, **kwargs):
     """Handle gift selection - show preview."""
-    gift_id = int(callback.data.split(":")[1])
+    gift_id = callback.data.split(":")[1]
     bot = callback.bot
     catalog = GiftCatalogService(bot)
     gift = await catalog.get_gift_by_id(gift_id)
@@ -82,22 +82,32 @@ async def cb_gift_select(callback: CallbackQuery, state: FSMContext, **kwargs):
         return
 
     # Apply pricing adjustment
+    from bot.config import config
     original_stars = gift["stars"]
+    
+    # Check for user-specific discount
+    user_id = callback.from_user.id
+    user_discount = config.payment.user_discounts.get(user_id, 0)
+    
     adjustment = gift.get("adjustment", 0)
-    final_stars = gift.get("stars", original_stars)  # Already updated if adjustment applied
+    # Combine adjustments (fixed fee/discount + user-specific discount)
+    final_stars = max(1, original_stars + adjustment - user_discount)
 
     # Store selection with final price
     gift_to_store = {**gift}
     gift_to_store["final_stars"] = final_stars
     gift_to_store["original_stars"] = original_stars
     gift_to_store["adjustment"] = adjustment
+    gift_to_store["user_discount"] = user_discount
 
     await state.update_data(selected_gift=gift_to_store)
     await state.set_state(GiftSelectStates.SELECTING)
 
     # Build price display
     price_line = f"💰 <b>Price:</b> {final_stars} ⭐"
-    if adjustment != 0:
+    if user_discount > 0:
+        price_line += f" (<s>{original_stars}</s>) <b>✨ Special Discount Applied!</b>"
+    elif adjustment != 0:
         adj_label = f"+{adjustment} ⭐ fee" if adjustment > 0 else f"{adjustment} ⭐ discount"
         price_line += f"\n<i>Official price: {original_stars} ⭐ ({adj_label})</i>"
 
@@ -116,7 +126,7 @@ async def cb_gift_select(callback: CallbackQuery, state: FSMContext, **kwargs):
 @router.callback_query(F.data.startswith("gift_confirm:"))
 async def cb_gift_confirm(callback: CallbackQuery, state: FSMContext, **kwargs):
     """Handle gift confirmation - move to custom message."""
-    gift_id = int(callback.data.split(":")[1])
+    gift_id = callback.data.split(":")[1]
     bot = callback.bot
     catalog = GiftCatalogService(bot)
     gift = await catalog.get_gift_by_id(gift_id)

@@ -113,17 +113,47 @@ class FinanceService:
         logger.info(f"Refund approved: {refund_id} by admin {admin_id}")
         return refund
 
-    async def complete_refund(self, refund_id: int) -> Refund:
+    async def complete_refund(self, refund_id: int, bot=None) -> Refund:
         """Complete a refund (mark as done)."""
         refund = await self.session.get(Refund, refund_id)
         if not refund:
             raise ValueError(f"Refund {refund_id} not found")
 
+        # Get payment info
+        payment = await self.session.get(Payment, refund.payment_id)
+        if not payment:
+            raise ValueError(f"Payment {refund.payment_id} not found for refund {refund_id}")
+
+        # If bot is provided, attempt to refund Stars via Telegram API
+        if bot and payment.telegram_payment_charge_id:
+            try:
+                # Telegram Bot API method: refundStarPayment
+                # We use __call__ with a custom method or raw API call
+                from aiogram.methods import TelegramMethod
+                from typing import Any
+
+                class RefundStarPayment(TelegramMethod[bool]):
+                    __returning__ = bool
+                    __api_method__ = "refundStarPayment"
+                    user_id: int
+                    telegram_payment_charge_id: str
+
+                await bot(RefundStarPayment(
+                    user_id=refund.telegram_id,
+                    telegram_payment_charge_id=payment.telegram_payment_charge_id
+                ))
+                logger.info(f"Stars successfully refunded via Telegram API for refund {refund_id}")
+            except Exception as e:
+                logger.error(f"Failed to refund Stars via Telegram API: {e}")
+                # We continue anyway to mark it as completed in our DB if needed,
+                # or we could raise an error to prevent DB update.
+                # For now, let's raise so we don't lie about completion.
+                raise e
+
         refund.status = RefundStatus.COMPLETED
         await self.session.flush()
 
         # Update payment status
-        payment = await self.session.get(Payment, refund.payment_id)
         if payment:
             payment.status = PaymentStatus.REFUNDED
 

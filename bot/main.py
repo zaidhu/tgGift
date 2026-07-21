@@ -23,6 +23,7 @@ from bot.handlers import (
     recipient_router,
     payment_router,
     confirmation_router,
+    inline_router,
 )
 from admin import (
     stats_router,
@@ -116,6 +117,7 @@ async def main():
     dp.include_router(recipient_router)
     dp.include_router(payment_router)
     dp.include_router(confirmation_router)
+    dp.include_router(inline_router)
 
     # Admin routers
     dp.include_router(admin_panel_router)

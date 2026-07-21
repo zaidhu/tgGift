@@ -6,6 +6,7 @@ from .custom_message import router as custom_message_router
 from .recipient import router as recipient_router
 from .payment import router as payment_router
 from .confirmation import router as confirmation_router
+from .inline import router as inline_router
 
 __all__ = [
     "start_router",
@@ -14,4 +15,5 @@ __all__ = [
     "recipient_router",
     "payment_router",
     "confirmation_router",
+    "inline_router",
 ]

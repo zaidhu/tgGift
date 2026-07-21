@@ -347,7 +347,7 @@ async def _proceed_to_review(message_or_callback, state, bot, recipient_id, kwar
 
     async with session_factory() as session:
         order = Order(
-            telegram_id=message_or_callback.from_user.id if hasattr(message_or_callback, 'from_user') else message_or_callback.message.from_user.id,
+            telegram_id=message_or_callback.from_user.id,
             buyer_id=user.id,
             status=OrderStatus.PENDING,
             gift_id=state_data.get("selected_gift", {}).get("id"),
@@ -363,21 +363,14 @@ async def _proceed_to_review(message_or_callback, state, bot, recipient_id, kwar
 
         await state.update_data(order_id=order.id)
 
-        if hasattr(message_or_callback, 'message'):
-            callback = message_or_callback
-        else:
-            callback = message_or_callback
-
-        await _show_order_review(callback, state, order)
+        await _show_order_review(message_or_callback, state, order)
 
 
-async def _show_order_review(callback, state, order):
+async def _show_order_review(message_or_callback, state, order):
     """Show order review before payment."""
     from bot.keyboards.gift_selection import order_review_keyboard
 
     state_data = await state.get_data()
-    gift = state_data.get("selected_gift", {})
-
     recipient = state_data.get("recipient_telegram_id", "Unknown")
     custom_msg = state_data.get("custom_message", "None")
 
@@ -391,5 +384,9 @@ async def _show_order_review(callback, state, order):
     )
 
     keyboard = order_review_keyboard(order.id)
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
-    await callback.answer()
+    
+    if isinstance(message_or_callback, CallbackQuery):
+        await message_or_callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
+        await message_or_callback.answer()
+    else:
+        await message_or_callback.answer(text, parse_mode="HTML", reply_markup=keyboard)

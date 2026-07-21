@@ -29,7 +29,7 @@ class TelegramAPIService:
     async def send_gift_to_user(
         self,
         recipient_id: int,
-        gift_id: int,
+        gift_id: str | int,
         custom_message: Optional[str] = None,
     ) -> bool:
         """
@@ -41,7 +41,7 @@ class TelegramAPIService:
             # or fall back to raw API call
             result = await self.bot.send_gift(
                 user_id=recipient_id,
-                gift_id=gift_id,
+                gift_id=str(gift_id),
                 text=custom_message,
             )
             logger.info(f"Gift sent to {recipient_id}, gift_id={gift_id}")

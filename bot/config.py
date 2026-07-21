@@ -63,6 +63,12 @@ class PaymentConfig:
     """Payment configuration."""
 
     currency: str = field(default_factory=lambda: os.getenv("PAYMENT_CURRENCY", "stars"))
+    # Format: user_id:discount_amount,user_id:discount_amount
+    user_discounts: dict[int, int] = field(default_factory=lambda: {
+        int(u.split(":")[0]): int(u.split(":")[1]) 
+        for u in os.getenv("USER_DISCOUNTS", "").split(",") 
+        if ":" in u
+    })
 
 
 @dataclass(frozen=True)
